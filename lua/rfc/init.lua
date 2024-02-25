@@ -6,7 +6,7 @@ if not has_plenary then
     error("This plugin requires nvim-lua/plenary.nvim to work.")
 end
 
-local has_telescope, telescope = pcall(require, "telescope")
+local has_telescope, _ = pcall(require, "telescope")
 
 if not has_telescope then
     error("This plugins requires nvim-telescope/telescope.nvim to work.")
@@ -25,6 +25,46 @@ local function slice(tbl, first, last, step)
         sliced[#sliced + 1] = tbl[i]
     end
     return sliced
+end
+
+local function buffer_exists(name)
+    name = vim.fn.expand("%:p:h") .. "/" .. name
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        print(name, vim.api.nvim_buf_get_name(buf))
+        if vim.api.nvim_buf_get_name(buf) == name then
+            return buf
+        end
+    end
+    return nil
+end
+
+local open_rfc_buf = function(file_path, rfc)
+    local file = io.open(file_path, "r")
+    local file_content = file:read("a")
+    file:close()
+
+    local bufnr = buffer_exists("RFC" .. rfc);
+    print(bufnr)
+
+    if bufnr then
+        vim.cmd("q!")
+        vim.api.nvim_set_current_buf(bufnr)
+        return
+    end
+
+    local bufnr = vim.api.nvim_create_buf(true, true)
+
+    vim.api.nvim_buf_set_name(bufnr, "RFC" .. rfc)
+    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(file_content, "\n"))
+
+    vim.api.nvim_buf_attach(bufnr, false, {
+        on_detach = function(_, _)
+            vim.api.nvim_buf_delete(bufnr, { force = true })
+        end
+    })
+
+    vim.cmd("q!")
+    vim.api.nvim_set_current_buf(bufnr)
 end
 
 local function sed(writer)
@@ -93,26 +133,7 @@ local pickers = require("telescope.pickers")
 local finders = require("telescope.finders")
 local action_state = require("telescope.actions.state")
 local sorters = require('telescope.sorters')
-
-local open_rfc_buf = function(file_path, rfc)
-    local file = io.open(file_path, "r")
-    local file_content = file:read("a")
-    local bufnr = vim.api.nvim_create_buf(true, true)
-
-    vim.api.nvim_buf_set_name(bufnr, "rfc" .. rfc .. ".txt")
-    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(file_content, "\n"))
-
-    vim.api.nvim_buf_attach(bufnr, false, {
-        on_detach = function(_, _)
-            print("Detached", bufnr)
-            vim.api.nvim_buf_delete(bufnr, { force = true })
-        end
-    })
-
-    vim.cmd("q!")
-    vim.cmd("buffer " .. bufnr)
-
-end
+local conf = require('telescope.config').values
 
 M.list_rfcs = function(opts)
     opts = opts or {
@@ -135,11 +156,10 @@ M.list_rfcs = function(opts)
         },
 
         sorter = sorters.get_generic_fuzzy_sorter({}),
-
         attach_mappings = function(_, map)
             local function open_rfc()
                 local selection = action_state.get_selected_entry()[1]
-                local rfc = string.match(selection, "RFC(%d+)")
+                local rfc = selection:match("RFC(%d+)")
                 local file = config.rfc_dir .. "/rfc" .. rfc .. ".txt"
 
                 if not file_exists(file) then
