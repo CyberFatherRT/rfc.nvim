@@ -30,7 +30,6 @@ end
 local function buffer_exists(name)
     name = vim.fn.expand("%:p:h") .. "/" .. name
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-        print(name, vim.api.nvim_buf_get_name(buf))
         if vim.api.nvim_buf_get_name(buf) == name then
             return buf
         end
@@ -44,7 +43,6 @@ local open_rfc_buf = function(file_path, rfc)
     file:close()
 
     local bufnr = buffer_exists("RFC" .. rfc);
-    print(bufnr)
 
     if bufnr then
         vim.cmd("q!")
@@ -145,6 +143,7 @@ M.list_rfcs = function(opts)
     }
 
     local file_ref = io.open(config.rfc_dir .. "/rfc-ref.txt", "r")
+
     local content_ref = file_ref:read("*a")
     file_ref:close()
 
@@ -155,7 +154,8 @@ M.list_rfcs = function(opts)
             results = vim.split(content_ref, "\n"),
         },
 
-        sorter = sorters.get_generic_fuzzy_sorter({}),
+        sorter = conf.generic_sorter(),
+
         attach_mappings = function(_, map)
             local function open_rfc()
                 local selection = action_state.get_selected_entry()[1]
