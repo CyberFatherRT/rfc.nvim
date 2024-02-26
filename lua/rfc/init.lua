@@ -154,7 +154,7 @@ M.list_rfcs = function(opts)
             results = vim.split(content_ref, "\n"),
         },
 
-        sorter = conf.generic_sorter(),
+        sorter = sorters.get_generic_fuzzy_sorter({}),
 
         attach_mappings = function(_, map)
             local function open_rfc()
