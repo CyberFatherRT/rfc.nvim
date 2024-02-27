@@ -83,7 +83,7 @@ end
 local function sed_rfc(filename)
     plenary.job:new({
         command = "sed",
-        args = { "-i", "/./,$!d", filename },
+        args = { "-i", "/^[\\s\\xef\\xbb\\xbf]*$/d", filename },
         on_exit = function(j, _)
             if j.code ~= 0 then
                 error("Failed to clean RFC")
