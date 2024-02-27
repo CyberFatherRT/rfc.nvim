@@ -95,7 +95,7 @@ end
 M.download_index = function()
     plenary.job:new({
         command = "curl",
-        args = { "https://www.ietf.org/rfc/rfc-ref.txt" },
+        args = { "https://www.rfc-editor.org/rfc/rfc-ref.txt" },
         on_exit = function(j, return_val)
             if return_val == 0 then
                 sed_index(j)
