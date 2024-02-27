@@ -65,7 +65,7 @@ local open_rfc_buf = function(file_path, rfc)
     vim.api.nvim_set_current_buf(bufnr)
 end
 
-local function sed(writer)
+local function sed_index(writer)
     plenary.job:new({
         command = "sed",
         args = { "-sr", [[s/RFC([0-9]+) \|.*\|.*, "(.*)".*/RFC\1:\2/]] },
@@ -80,13 +80,25 @@ local function sed(writer)
     }):start()
 end
 
+local function sed_rfc(filename)
+    plenary.job:new({
+        command = "sed",
+        args = { "-i", "/./,$!d", filename },
+        on_exit = function(j, _)
+            if j.code ~= 0 then
+                error("Failed to clean RFC")
+            end
+        end,
+    }):sync()
+end
+
 M.download_index = function()
     plenary.job:new({
         command = "curl",
         args = { "https://www.ietf.org/rfc/rfc-ref.txt" },
         on_exit = function(j, return_val)
             if return_val == 0 then
-                sed(j)
+                sed_index(j)
             else
                 error("Failed to download index")
             end
@@ -104,6 +116,7 @@ M.download_rfc = function(rfc)
             end
         end,
     }):sync()
+    sed_rfc(config.rfc_dir .. "/rfc" .. rfc .. ".txt")
 end
 
 M.setup = function(opts)
