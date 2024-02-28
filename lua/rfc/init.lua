@@ -80,18 +80,6 @@ local function sed_index(writer)
     }):start()
 end
 
-local function sed_rfc(filename)
-    plenary.job:new({
-        command = "sed",
-        args = { "-i", "/^[\\s\\xef\\xbb\\xbf]*$/d", filename },
-        on_exit = function(j, _)
-            if j.code ~= 0 then
-                error("Failed to clean RFC")
-            end
-        end,
-    }):sync()
-end
-
 M.download_index = function()
     plenary.job:new({
         command = "curl",
@@ -116,7 +104,6 @@ M.download_rfc = function(rfc)
             end
         end,
     }):sync()
-    sed_rfc(config.rfc_dir .. "/rfc" .. rfc .. ".txt")
 end
 
 M.setup = function(opts)
