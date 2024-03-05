@@ -39,6 +39,11 @@ end
 
 local open_rfc_buf = function(file_path, rfc)
     local file = io.open(file_path, "r")
+    if file == nil then
+        error("File " .. file_path .. "not found.")
+        return
+    end
+
     local file_content = file:read("a")
     file:close()
 
@@ -50,7 +55,7 @@ local open_rfc_buf = function(file_path, rfc)
         return
     end
 
-    local bufnr = vim.api.nvim_create_buf(true, true)
+    bufnr = vim.api.nvim_create_buf(true, true)
 
     vim.api.nvim_buf_set_name(bufnr, "RFC" .. rfc)
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(file_content, "\n"))
